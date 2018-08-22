@@ -1,0 +1,14 @@
+{
+  "name": "psm",
+  "version": "0.1.0",
+  "description": "prism erc20 token",
+  "main": "index.js",
+  "repository": "https://github.com/PRISMHUB/psm.git",
+  "author": "ruislan",
+  "private": true,
+  "license": "MIT",
+  "dependencies": {
+    "ganache-cli": "^6.1.8",
+    "truffle": "^4.1.14"
+  }
+}
