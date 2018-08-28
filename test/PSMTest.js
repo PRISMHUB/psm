@@ -91,6 +91,38 @@ contract('PSM', async(accounts) => {
         await expectThrow(instance.sendTransaction({value: 8 * 10**18, from: user1}))
     })
 
+    it("test pause & uppause", async() => {
+        let owner = accounts[0]
+        let notOwner = accounts[1]
+        let richMan = accounts[8]
+        let poorMan = accounts[9]
+
+        let instance = await PSM.deployed()
+        let expectOwner = await instance.owner.call()
+        assert.equal(expectOwner.valueOf(), owner, "Owner isn't correct")
+
+        await instance.transfer(richMan, 10000, {from: owner})
+        let richManBalance = await instance.balanceOf.call(richMan)
+        assert.equal(richManBalance.toNumber() > 1, true, "Rich Man, ahh?")
+
+        await expectThrow(instance.pause({from: notOwner})) // not owner
+        await instance.pause({from: owner})
+        await expectThrow(instance.transfer(poorMan, 1, {from: richMan})) // paused
+        await expectThrow(instance.approve(poorMan, 1, {from: richMan})) // paused
+        await expectThrow(instance.unpause({from: notOwner})) // not owner
+
+        await instance.unpause({from: owner})
+        await instance.transfer(poorMan, 1, {from: richMan}) // ok now
+        await instance.approve(poorMan, 1, {from: richMan}) // ok now
+
+        await instance.pause({from: owner})
+        await expectThrow(instance.transferFrom(richMan, poorMan, 1, {from: richMan})) // paused
+        await instance.unpause({from: owner})
+        let poorManAllowd = await instance.allowance.call(richMan, poorMan)
+        assert.equal(poorManAllowd.toNumber(), 1, "Poor Man, ahh?")
+        await instance.transferFrom(richMan, poorMan, 1, {from: poorMan}) // ok now
+    })
+
     it("test transferOwnership", async() => {
         let owner = accounts[0]
         let newOwner = accounts[1]
