@@ -67,8 +67,7 @@ contract Pausable is Owned {
 }
 
 contract EIP20Interface {
-    uint256 public totalSupply;
-
+    function totalSupply() public view returns (uint256);
     function balanceOf(address _owner) public view returns (uint256 balance);
     function transfer(address _to, uint256 _value) public returns (bool success);
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
@@ -81,11 +80,10 @@ contract EIP20Interface {
 
 
 contract PSM is Owned, SafeMath, Pausable, EIP20Interface {
+    uint256 private totalSupply_;
     string public name;
     string public symbol;
     uint8 public decimals;
-
-    uint8 public version = 1;
     
     mapping (address => uint256) public balances;
     mapping (address => uint256) public frozen;
@@ -98,11 +96,15 @@ contract PSM is Owned, SafeMath, Pausable, EIP20Interface {
         name = "PRISM Coin";
         symbol = "PSM";
         decimals = 8;
-        totalSupply = 1000000000 * 10 ** uint256(decimals);
-        balances[msg.sender] = totalSupply;
+        totalSupply_ = 1000000000 * 10 ** uint256(decimals);
+        balances[msg.sender] = totalSupply_;
     }
     
     // erc20 part
+    function totalSupply() public view returns (uint256) {
+        return totalSupply_;
+    }
+
     function balanceOf(address _owner) public view returns (uint256 balance) {
         return balances[_owner];
     }
