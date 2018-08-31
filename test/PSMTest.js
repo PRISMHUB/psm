@@ -91,6 +91,52 @@ contract('PSM', async(accounts) => {
         await expectThrow(instance.sendTransaction({value: 8 * 10**18, from: user1}))
     })
 
+    it("test freeze & unfreeze", async() => {
+        let owner = accounts[0]
+        let user1 = accounts[1]
+        let user2 = accounts[2]
+        let user3 = accounts[3]
+        let user4 = accounts[4]
+        
+        let instance = await PSM.deployed()
+
+
+        await instance.transfer(user1, 500, {from: owner}) // don't forget user1 allowed user5 500, user5 transfer from user1, so we fill it again.
+        let user1Balance = await instance.balanceOf.call(user1)
+        assert.equal(user1Balance.toNumber(), 1000, "User 1 balance wasn't correctly")
+
+        await instance.freeze(user1, 500)
+
+        let user1BalanceAfterFreeze = await instance.balanceOf.call(user1)
+        assert.equal(user1BalanceAfterFreeze.toNumber(), 500, "User 1 balance wasn't correctly")
+
+        let frozenOfUser1 = await instance.frozenOf.call(user1)
+        assert.equal(frozenOfUser1.toNumber(), 500, "User 1 frozen balance wasn't correctly")
+
+        await instance.unfreeze(user1, 250)
+        let user1BalanceAfterUnfreezePart = await instance.balanceOf.call(user1)
+        assert.equal(user1BalanceAfterUnfreezePart.toNumber(), user1BalanceAfterFreeze.toNumber() + 250, "User 1 balance wasn't correctly")
+
+        let frozenOfUser1AfterUnfreezePart = await instance.frozenOf.call(user1)
+        assert.equal(frozenOfUser1AfterUnfreezePart.toNumber(), 500 - 250, "User 1 frozen balance wasn't correctly")
+
+        
+        await expectThrow(instance.freeze(user2, 500, {from: user1}))
+        await expectThrow(instance.freeze(user2, 1001, {from: owner}))
+        await expectThrow(instance.freeze(user2, -1, {from: owner}))
+        await expectThrow(instance.freeze(user2, 2 ** 32, {from: owner}))
+        // test transfer over frozen
+        await expectThrow(instance.transfer(user3, 751, {from: user1}))
+
+        // test transfer ok
+        let user3Balance1 = await instance.balanceOf.call(user3)
+        assert.equal(user3Balance1.toNumber(), 0, "User 3 balance wasn't correctly")
+        await instance.transfer(user3, 250 , {from: user1})
+        let user3BalanceAfterTransfer = await instance.balanceOf.call(user3)
+        assert.equal(user3BalanceAfterTransfer.toNumber(), 250, "User 3 balance wasn't correctly")
+    })
+
+
     it("test pause & uppause", async() => {
         let owner = accounts[0]
         let notOwner = accounts[1]

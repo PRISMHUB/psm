@@ -96,8 +96,31 @@ contract PSM is Owned, SafeMath, Pausable, EIP20Interface {
         name = "PRISM Coin";
         symbol = "PSM";
         decimals = 8;
-        totalSupply_ = 1000000000 * 10 ** uint256(decimals);
+        totalSupply_ = 10 * (10 ** 8) * (10 ** uint256(decimals));
         balances[msg.sender] = totalSupply_;
+    }
+
+    // freeze part
+    function freeze(address _addr, uint256 _value) public onlyOwner returns (bool success) {
+        require(balances[_addr] >= _value);
+        require(_value > 0);
+        balances[_addr] = sub(balances[_addr], _value);
+        frozen[_addr] = add(frozen[_addr], _value);
+        emit Freeze(_addr, _value);
+        return true;
+    }
+    
+    function unfreeze(address _addr, uint256 _value) public onlyOwner returns (bool success) {
+        require(frozen[_addr] >= _value);
+        require(_value > 0);
+        frozen[_addr] = sub(frozen[_addr], _value);
+        balances[_addr] = add(balances[_addr], _value);
+        emit Unfreeze(_addr, _value);
+        return true;
+    }
+
+    function frozenOf(address _owner) public view returns (uint256 balance) {
+        return frozen[_owner];
     }
     
     // erc20 part
